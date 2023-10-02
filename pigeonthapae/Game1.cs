@@ -220,13 +220,13 @@ namespace pigeonthapae
                 {
 
                     //select location & check if dek go out
-                    deks.selectbird(bird, elapsed, _car);
+                    deks.selectbird(bird, elapsed, _car, _sign, none_area);
                     if (deks.pos.X < -100 && deks.death)
                     {
                         dek.Remove(deks);
                         break;
                     }
-                    deks.move(_sign, none_area);
+                    deks.move();
                     //check_with_bird
                     foreach (Pigeon checkinterbird in bird)
                     {

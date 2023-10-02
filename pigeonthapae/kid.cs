@@ -22,6 +22,7 @@ namespace pigeonthapae
         private Vector2 target;
         private Random rnd = new Random();
         public Rectangle hitbox,bar;
+        private bool on_sign = false;
 
         private Texture2D texture, bartexture;
         private int select;
@@ -45,7 +46,7 @@ namespace pigeonthapae
             _batch.Draw(bartexture, bar, Color.Red);
         }
 
-        public void selectbird(List<Pigeon> bird,float time,List<Car> _car)
+        public void selectbird(List<Pigeon> bird,float time,List<Car> _car,List<Sign> _sign,Rectangle nonearea)
         {
             anim.UpdateFrame(time);
             elapsed += time;
@@ -65,11 +66,30 @@ namespace pigeonthapae
                         target = pos;
                     }
                 }
+                foreach (Sign mini_sign in _sign)
+                {
+                    if (hitbox.Intersects(mini_sign.hitbox))
+                    {
+                        if (pos.X < mini_sign.hitbox.X + (mini_sign.hitbox.Width / 2))
+                        {
+                            target = new Vector2(mini_sign.hitbox.X - hitbox.Width, mini_sign.hitbox.Y);
+                        }
+                        else if (pos.X >= mini_sign.hitbox.X + (mini_sign.hitbox.Width / 2))
+                        {
+                            target = new Vector2(mini_sign.hitbox.X + mini_sign.hitbox.Width, mini_sign.hitbox.Y);
+                        }
+                    }
+                }
+                if (nonearea.Intersects(hitbox))
+                {
+                    target = new Vector2(pos.X, pos.Y + 200);
+                }
             }
             else if (death == true)
             {
                 target = new Vector2(-200, 600);
             }
+
             
             if(health <= max_health/2 & _car.Count > 0)
             {
@@ -79,7 +99,7 @@ namespace pigeonthapae
           
         }
 
-        public void move(List<Sign> _sign,Rectangle nonearea)
+        public void move()
         {
             if (!hitbox.Contains(target))
             {
@@ -108,24 +128,8 @@ namespace pigeonthapae
                 anim.startrow = 1;
             }
 
-            if (nonearea.Intersects(hitbox))
-            {
-                target = new Vector2(pos.X, pos.Y + 50);
-            }
-            foreach (Sign mini_sign in _sign)
-            {
-                if (hitbox.Intersects(mini_sign.hitbox))
-                {
-                    if(pos.X < mini_sign.hitbox.X + (mini_sign.hitbox.Width / 2))
-                    {
-                        target = new Vector2(mini_sign.hitbox.X-hitbox.Width, mini_sign.hitbox.Y);
-                    }
-                    if(pos.X > mini_sign.hitbox.X + (mini_sign.hitbox.Width / 2))
-                    {
-                        target = new Vector2(mini_sign.hitbox.X+mini_sign.hitbox.Width, mini_sign.hitbox.Y);
-                    }
-                }
-            }
+            
+          
             lastpos = pos;
         }
 

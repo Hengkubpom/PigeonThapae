@@ -115,11 +115,12 @@ namespace pigeonthapae
                     break;
                 }
             }
-            if (hungry <= 0)
+            if (hungry <= 0 || go_out)
             {
                 speed = 2;
                 go_out = true;
                 fly = true;
+                allow_hitbox = false;
                 anim.changeall(flytexture, 9, 1, 10, 1);
                 if (pos.X < 500)
                 {
@@ -199,19 +200,10 @@ namespace pigeonthapae
                         target = new Vector2(pos.X - rnd.Next(250,400), rnd.Next(310, 600));
                     }
                     allow_hitbox = false;
-                    if(health <= 0 || hungry <= 0)
+                    if(health <= 0)
                     {
                         go_out = true;
                         fly = true;
-                        anim.changeall(flytexture, 9, 1, 10, 1);
-                        if (pos.X < 500)
-                        {
-                            target = new Vector2(-100, -100);
-                        }
-                        else
-                        {
-                            target = new Vector2(1400,-100);
-                        }
                     }
                 }
                 hitbox = new Rectangle((int)target.X, (int)target.Y, texture.Width, texture.Height);
