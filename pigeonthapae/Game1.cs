@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.ConstrainedExecution;
 
 namespace pigeonthapae
@@ -41,7 +42,7 @@ namespace pigeonthapae
         private KeyboardState _keyboardState, oldstate;
         private MouseState _mousestate, oldms, lastms;
         private Texture2D pigeon_texture, bg, kid_texure, barcolor, buy_bird, buy_car, food_texture, police_texture, sign_texture, buy_police, buy_sign;
-        private Texture2D pigeon_fly, car_texture, board_ui, bar_grob, talk_texture, hit_effect;
+        private Texture2D pigeon_fly, car_texture, board_ui, bar_grob, talk_texture, hit_effect, pause_1, pause_2, pause_dark;
         private List<Pigeon> bird = new List<Pigeon>();
         private List<kid> dek = new List<kid>();
         private List<food> bfood = new List<food>();
@@ -51,12 +52,18 @@ namespace pigeonthapae
         private List<Ceffect> hit = new List<Ceffect>();
         private float elapsed;
         private Random rnd = new Random();
-        private bool attacked = false;
+        private bool attacked = false, pause = false;
         private float time_pick = 0;
-        private Rectangle bar, button_bird, button_sign, button_police, button_car, none_area, none_area2;
+        private Rectangle bar, button_bird, button_sign, button_police, button_pause, button_car, none_area, none_area2;
         private string type_click = "food";
         private float c_sign, c_police, c_car;
         private string holding_text, holding_price;
+        private float time_score = 0, stage = 0, bird_a = 0, money_a = 0;
+        private float time_scoreb = 0, stageb = 0, bird_b = 0, money_b = 0;
+        private string filepath;
+        private FileStream file;
+        private BinaryReader reader;
+        private BinaryWriter writer;
 
         public Game1()
         {
@@ -75,9 +82,50 @@ namespace pigeonthapae
             button_police = new Rectangle(650, 710, 146, 80);
             button_sign = new Rectangle(820, 698, 170, 102);
             button_car = new Rectangle(1010, 698, 190, 98);
+            button_pause = new Rectangle(600, 750, 16, 26);
             c_sign = cooldown_sign;
             c_police = cooldown_police;
             c_car = cooldown_car;
+            filepath = Path.Combine("../net6.0/Content/data/time.bin");
+            file = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+            //file = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+            reader = new BinaryReader(file);
+            time_scoreb = (float)reader.ReadInt16();
+            reader.Close();
+            //writer = new BinaryWriter(file);
+            //writer.Write((int)40);
+            //writer.Flush();
+            //writer.Close();
+            filepath = Path.Combine("../net6.0/Content/data/stage.bin");
+            file = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+            reader = new BinaryReader(file);
+            stageb = (float)reader.ReadInt16();
+            reader.Close();
+            //file = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+            //writer = new BinaryWriter(file);
+            //writer.Write((int)30);
+            //writer.Flush();
+            //writer.Close();
+            filepath = Path.Combine("../net6.0/Content/data/bird.bin");
+            file = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+            reader = new BinaryReader(file);
+            bird_b = (float)reader.ReadInt16();
+            reader.Close();
+            //file = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+            //writer = new BinaryWriter(file);
+            //writer.Write((int)20);
+            //writer.Flush();
+            //writer.Close();
+            filepath = Path.Combine("../net6.0/Content/data/money.bin");
+            file = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+            reader = new BinaryReader(file);
+            money_b = (float)reader.ReadInt16();
+            //file = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+            //writer = new BinaryWriter(file);
+            //writer.Write((int)10);
+            //writer.Flush();
+            //writer.Close();
+            reader.Close();
             base.Initialize();
         }
 
@@ -101,6 +149,9 @@ namespace pigeonthapae
             cooldown_text = Content.Load<SpriteFont>("cooldown_text");
             talk_texture = Content.Load<Texture2D>("UI/talk");
             hit_effect = Content.Load<Texture2D>("effect/hit_effect");
+            pause_1 = Content.Load<Texture2D>("UI/pause_1");
+            pause_2 = Content.Load<Texture2D>("UI/pause_2");
+            pause_dark = Content.Load<Texture2D>("UI/pause_dark");
             bg = Content.Load<Texture2D>("bg");
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             bird.Add(new Pigeon(pigeon_texture, pigeon_fly, new Vector2(rnd.Next(10, bound_X), rnd.Next(310, bound_Y))));
@@ -113,342 +164,410 @@ namespace pigeonthapae
             //end game
             if (bird.Count <= 0)
             {
-                //    Exit();
+                if(time_score > time_scoreb)
+                {
+                    time_scoreb = time_score;
+                }
+                if (stage > stageb)
+                {
+                    stageb = stage;
+                }
+                if (money_a > money_b)
+                {
+                    money_b = money_a;
+                }
+                if (bird_a > bird_b)
+                {
+                    bird_b = bird_a;
+                }
+                filepath = Path.Combine("../net6.0/Content/data/time.bin");
+                file = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+                writer = new BinaryWriter(file);
+                writer.Write((int)time_scoreb);
+                writer.Flush();
+                writer.Close();
+                filepath = Path.Combine("../net6.0/Content/data/stage.bin");
+                file = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+                writer = new BinaryWriter(file);
+                writer.Write((int)stageb);
+                writer.Flush();
+                writer.Close();
+                filepath = Path.Combine("../net6.0/Content/data/bird.bin");
+                file = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+                writer = new BinaryWriter(file);
+                writer.Write((int)bird_b);
+                writer.Flush();
+                writer.Close();
+                filepath = Path.Combine("../net6.0/Content/data/money.bin");
+                file = new FileStream(filepath, FileMode.Create, FileAccess.Write);
+                writer = new BinaryWriter(file);
+                writer.Write((int)money_b);
+                writer.Flush();
+                writer.Close();
+                Exit();
             }
-
-
-
-
-            //time
-            elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            time_pick += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            //cooldown skill
-            c_police -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-            c_sign -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-            c_car -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if (c_police <= 0)
-            {
-                c_police = 0;
-            }
-            if (c_sign <= 0)
-            {
-                c_sign = 0;
-            }
-            if (c_car <= 0)
-            {
-                c_car = 0;
-            }
-
 
             //state mouse keyboard
             _mousestate = Mouse.GetState();
             _keyboardState = Keyboard.GetState();
-
-
-            //cheat
-            if (_keyboardState.IsKeyDown(Keys.A) & oldstate.IsKeyUp(Keys.A))
-            {
-                money += 500;
-            }
-            if (_keyboardState.IsKeyDown(Keys.R) & oldstate.IsKeyUp(Keys.R))
-            {
-                c_car = 0;
-                c_sign = 0;
-                c_police = 0;
-            }
-
-
             //debug
             if (_keyboardState.IsKeyDown(Keys.Q) & oldstate.IsKeyUp(Keys.Q))
             {
-                Console.WriteLine("elapsed = " + elapsed);
-                Console.WriteLine("money = " + money);
                 Console.WriteLine("Time = " + time_pick);
                 Console.WriteLine("X = " + _mousestate.X + " Y =" + _mousestate.Y);
                 Console.WriteLine("Police Cooldown = " + c_police);
                 Console.WriteLine("Sign Cooldown = " + c_sign);
                 Console.WriteLine("Car Cooldown = " + c_car);
                 Console.WriteLine("Type = " + type_click);
-
+                Console.WriteLine("timescore = " + time_score + " & " + time_scoreb);
+                Console.WriteLine("money a = " + money_a + " & " + money_b);
+                Console.WriteLine("bird a = " + bird_a + " & " + bird_b);
+                Console.WriteLine("stage = " + stage + " & " + stageb);
             }
-
-
-            //spawn dek
-            if (time_pick >= Time_spawn_dek || _keyboardState.IsKeyDown(Keys.H) & oldstate.IsKeyUp(Keys.H))
+            if (!pause)
             {
-                dek.Add(new kid(kid_texure, where_dekspawn, boss_health, barcolor));
-                attacked = true;
-            }
 
-
-            //update bird
-            foreach (Pigeon ppbird in bird)
-            {
-                ppbird.move(none_area);
-                //randomlocation & check bird go outside
-                ppbird.updatebird(bound_X, bound_Y, elapsed, bfood);
-                if (ppbird.pos.Y <= 0 - pigeon_texture.Height)
+                //time
+                elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
+                time_pick += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                //cooldown skill
+                c_police -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                c_sign -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                c_car -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (c_police <= 0)
                 {
-                    bird.Remove(ppbird);
-                    break;
+                    c_police = 0;
                 }
-                //check bird_with_food
+                if (c_sign <= 0)
+                {
+                    c_sign = 0;
+                }
+                if (c_car <= 0)
+                {
+                    c_car = 0;
+                }
+
+
+
+
+                //cheat
+                if (_keyboardState.IsKeyDown(Keys.A) & oldstate.IsKeyUp(Keys.A))
+                {
+                    money += 500;
+                }
+                if (_keyboardState.IsKeyDown(Keys.R) & oldstate.IsKeyUp(Keys.R))
+                {
+                    c_car = 0;
+                    c_sign = 0;
+                    c_police = 0;
+                }
+
+
+
+
+
+                //spawn dek
+                if (time_pick >= Time_spawn_dek || _keyboardState.IsKeyDown(Keys.H) & oldstate.IsKeyUp(Keys.H))
+                {
+                    dek.Add(new kid(kid_texure, where_dekspawn, boss_health, barcolor));
+                    attacked = true;
+                }
+
+
+                //update bird
+                foreach (Pigeon ppbird in bird)
+                {
+                    ppbird.move(none_area);
+                    //randomlocation & check bird go outside
+                    ppbird.updatebird(bound_X, bound_Y, elapsed, bfood);
+                    if (ppbird.pos.Y <= 0 - pigeon_texture.Height)
+                    {
+                        bird.Remove(ppbird);
+                        break;
+                    }
+                    //check bird_with_food
+                    foreach (food mini_food in bfood)
+                    {
+                        if (ppbird.checkfood(mini_food.hitbox))
+                        {
+                            bfood.Remove(mini_food);
+                            break;
+                        }
+                    }
+                }
+
+
+                //check attacked
+                if (attacked)
+                {
+
+                    time_pick = 0;
+                    //check all dek die
+                    if (dek.Count <= 0)
+                    {
+                        attacked = false;
+                        boss_health += boss_health_per_level;
+                        stage += 1;
+                    }
+                    //update dek , location dek, move, check_with_bird
+                    foreach (kid deks in dek)
+                    {
+
+                        //select location & check if dek go out
+                        deks.selectbird(bird, elapsed, _car, _sign, none_area);
+                        if (deks.pos.X < -100 && deks.death)
+                        {
+                            dek.Remove(deks);
+                            break;
+                        }
+                        deks.move();
+                        //check_with_bird
+                        foreach (Pigeon checkinterbird in bird)
+                        {
+                            checkinterbird.checkintersect(deks.hitbox);
+                        }
+
+                        //check_with_police & update
+                        foreach (Police mini_police in _police)
+                        {
+                            deks.damaged(mini_police.hitbox, elapsed);
+                        }
+
+                    }
+                }
+                else
+                {
+                    bar = new Rectangle(68, 670, (int)(bar_width - (bar_width * (time_pick / Time_spawn_dek))), 10);
+                }
+
+                //change type click
+                if (type_click != "sign_select")
+                {
+                    if (button_bird.Contains(_mousestate.X, _mousestate.Y))
+                    {
+                        type_click = "buybird";
+                        holding_text = "Buy Bird";
+                        holding_price = "10 Coins";
+                    }
+                    else if (button_sign.Contains(_mousestate.X, _mousestate.Y))
+                    {
+                        type_click = "sign";
+                        holding_text = "Buy Sign";
+                        holding_price = "20 Coins";
+                    }
+                    else if (button_police.Contains(_mousestate.X, _mousestate.Y))
+                    {
+                        type_click = "police";
+                        holding_text = "Call Police";
+                        holding_price = "50 Coins";
+                    }
+                    else if (button_car.Contains(_mousestate.X, _mousestate.Y))
+                    {
+                        type_click = "car";
+                        holding_text = "Call Red Car";
+                        holding_price = "100 Coins";
+                    }
+                    else if(button_pause.Contains(_mousestate.X, _mousestate.Y))
+                    {
+                        type_click = "pause";
+                        holding_text = "Pause the game";
+                        holding_price = " ";
+                    }
+                    else if (none_area.Contains(_mousestate.X, _mousestate.Y) || none_area2.Contains(_mousestate.X, _mousestate.Y))
+                    {
+                        type_click = "None";
+                        holding_text = " ";
+                        holding_price = " ";
+                    }
+                    else if (_mousestate.X >= _graphics.GraphicsDevice.Viewport.Width || _mousestate.Y > _graphics.GraphicsDevice.Viewport.Height || _mousestate.X <= 0 || _mousestate.Y <= 0)
+                    {
+                        type_click = "None";
+                        holding_text = " ";
+                        holding_price = " ";
+                    }
+                    else
+                    {
+                        type_click = "food";
+                        holding_text = " ";
+                        holding_price = " ";
+                    }
+                }
+                //click screen
+                if (_mousestate.LeftButton == ButtonState.Pressed && oldms.LeftButton == ButtonState.Released)
+                {
+                    if (type_click == "food")
+                    {
+                        if (attacked)
+                        {
+                            foreach (kid mini_dek in dek)
+                            {
+                                if (!mini_dek.damaged(_mousestate, oldms) & money >= food_price)
+                                {
+                                    bfood.Add(new food(food_texture, 1, 1, 1, new Vector2(_mousestate.X, _mousestate.Y)));
+
+                                    money -= food_price;
+                                }
+                                else //feedback
+                                {
+                                    hit.Add(new Ceffect(hit_effect, new Vector2(_mousestate.X, _mousestate.Y)));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (money >= food_price)
+                            {
+                                bfood.Add(new food(food_texture, 1, 1, 1, new Vector2(_mousestate.X, _mousestate.Y)));
+                                money -= food_price;
+                            }
+                        }
+                    }
+                    else if (type_click == "buybird" & money >= bird_price)
+                    {
+                        bird.Add(new Pigeon(pigeon_texture, pigeon_fly, new Vector2(rnd.Next(10, bound_X), rnd.Next(310, bound_Y))));
+                        money -= bird_price;
+                    }
+                    else if (type_click == "sign" & c_sign == 0 & money >= price_sign)
+                    {
+                        type_click = "sign_select";
+                        holding_text = "Choose the area";
+                        holding_price = " ";
+                        money -= price_sign;
+                    }
+                    else if (type_click == "sign_select")
+                    {
+                        if (!none_area.Contains(_mousestate.X, _mousestate.Y) & !none_area2.Contains(_mousestate.X, _mousestate.Y))
+                        {
+                            if (_mousestate.X < _graphics.GraphicsDevice.Viewport.Width & _mousestate.Y < _graphics.GraphicsDevice.Viewport.Height & _mousestate.X > 0 & _mousestate.Y > 0)
+                            {
+                                c_sign = cooldown_sign;
+                                type_click = "food";
+                                _sign.Add(new Sign(sign_texture, new Vector2(_mousestate.X - (sign_texture.Width / 2), _mousestate.Y - (sign_texture.Height / 2)), time_sign, area_sign));
+                            }
+                        }
+                    }
+                    else if (type_click == "police" & c_police == 0 & money >= price_police)
+                    {
+                        _police.Add(new Police(police_texture, time_police));
+                        c_police = cooldown_police;
+                        money -= price_police;
+                    }
+                    else if (type_click == "car" & c_car == 0 & money >= price_car)
+                    {
+                        _car.Add(new Car(car_texture, time_car));
+                        c_car = cooldown_car;
+                        money -= price_car;
+                    }
+                    else if (type_click == "pause")
+                    {
+                        pause = true;
+                        type_click = "None";
+                    }
+
+                }
+
+                //update car
+                foreach (Car mini_car in _car)
+                {
+                    mini_car.update(elapsed);
+                    if (mini_car.pos.X < -250)
+                    {
+                        _car.Remove(mini_car);
+                        break;
+                    }
+                    foreach (kid mini_dek in dek)
+                    {
+                        if (mini_dek.health <= mini_dek.max_health / 2 & mini_dek.hitbox.Intersects(mini_car.hitbox))
+                        {
+                            dek.Remove(mini_dek);
+                            break;
+                        }
+                    }
+                }
+                //update police
+
+                foreach (Police mini_police in _police)
+                {
+                    mini_police.selecttarget(dek, elapsed);
+                    mini_police.update();
+                    if (mini_police.time_out)
+                    {
+                        if (mini_police.pos.X >= _graphics.GraphicsDevice.Viewport.Width)
+                        {
+                            _police.Remove(mini_police);
+                            break;
+                        }
+                    }
+                }
+
+                //update sign
+                foreach (Sign mini_sign in _sign)
+                {
+                    if (mini_sign.time_out(elapsed))
+                    {
+                        _sign.Remove(mini_sign);
+                        break;
+                    }
+                }
+
+                //Control worth coin
+                if (bird.Count > 0 && bird.Count <= 5)
+                {
+                    Coin.worth = 5;
+                }
+                else if (bird.Count > 5 && bird.Count <= 10)
+                {
+                    Coin.worth = 4;
+                }
+                else if (bird.Count > 10 && bird.Count <= 15)
+                {
+                    Coin.worth = 3;
+                }
+                else if (bird.Count > 15 && bird.Count <= 20)
+                {
+                    Coin.worth = 2;
+                }
+                else if (bird.Count > 20)
+                {
+                    Coin.worth = 1;
+                }
+
+
+                //destroy food
                 foreach (food mini_food in bfood)
                 {
-                    if (ppbird.checkfood(mini_food.hitbox))
+                    if (mini_food.selfdestroy(elapsed))
                     {
                         bfood.Remove(mini_food);
                         break;
                     }
                 }
-            }
 
-
-            //check attacked
-            if (attacked)
-            {
-
-                time_pick = 0;
-                //check all dek die
-                if (dek.Count <= 0)
+                //update effect
+                foreach (Ceffect mini_effect in hit)
                 {
-                    attacked = false;
-                    boss_health += boss_health_per_level;
-                }
-                //update dek , location dek, move, check_with_bird
-                foreach (kid deks in dek)
-                {
-
-                    //select location & check if dek go out
-                    deks.selectbird(bird, elapsed, _car, _sign, none_area);
-                    if (deks.pos.X < -100 && deks.death)
+                    if (mini_effect.update(elapsed))
                     {
-                        dek.Remove(deks);
-                        break;
-                    }
-                    deks.move();
-                    //check_with_bird
-                    foreach (Pigeon checkinterbird in bird)
-                    {
-                        checkinterbird.checkintersect(deks.hitbox);
-                    }
-
-                    //check_with_police & update
-                    foreach (Police mini_police in _police)
-                    {
-                        deks.damaged(mini_police.hitbox, elapsed);
-                    }
-
-                }
-            }
-            else
-            {
-                bar = new Rectangle(68, 670, (int)(bar_width - (bar_width * (time_pick / Time_spawn_dek))), 10);
-            }
-
-            //change type click
-            if (type_click != "sign_select")
-            {
-                if (button_bird.Contains(_mousestate.X, _mousestate.Y))
-                {
-                    type_click = "buybird";
-                    holding_text = "Buy Bird";
-                    holding_price = "10 Coins";
-                }
-                else if (button_sign.Contains(_mousestate.X, _mousestate.Y))
-                {
-                    type_click = "sign";
-                    holding_text = "Buy Sign";
-                    holding_price = "20 Coins";
-                }
-                else if (button_police.Contains(_mousestate.X, _mousestate.Y))
-                {
-                    type_click = "police";
-                    holding_text = "Call Police";
-                    holding_price = "50 Coins";
-                }
-                else if (button_car.Contains(_mousestate.X, _mousestate.Y))
-                {
-                    type_click = "car";
-                    holding_text = "Call Red Car";
-                    holding_price = "100 Coins";
-                }
-                else if (none_area.Contains(_mousestate.X, _mousestate.Y) || none_area2.Contains(_mousestate.X, _mousestate.Y))
-                {
-                    type_click = "None";
-                    holding_text = " ";
-                    holding_price = " ";
-                }
-                else if (_mousestate.X >= _graphics.GraphicsDevice.Viewport.Width || _mousestate.Y > _graphics.GraphicsDevice.Viewport.Height || _mousestate.X <= 0 || _mousestate.Y <= 0)
-                {
-                    type_click = "None";
-                    holding_text = " ";
-                    holding_price = " ";
-                }
-                else
-                {
-                    type_click = "food";
-                    holding_text = " ";
-                    holding_price = " ";
-                }
-            }
-            //click screen
-            if (_mousestate.LeftButton == ButtonState.Pressed && oldms.LeftButton == ButtonState.Released)
-            {
-                if (type_click == "food")
-                {
-                    if (attacked)
-                    {
-                        foreach (kid mini_dek in dek)
-                        {
-                            if (!mini_dek.damaged(_mousestate, oldms) & money >= food_price)
-                            {
-                                bfood.Add(new food(food_texture, 1, 1, 1, new Vector2(_mousestate.X, _mousestate.Y)));
-
-                                money -= food_price;
-                            }
-                            else //feedback
-                            {
-                                hit.Add(new Ceffect(hit_effect, new Vector2(_mousestate.X, _mousestate.Y)));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (money >= food_price)
-                        {
-                            bfood.Add(new food(food_texture, 1, 1, 1, new Vector2(_mousestate.X, _mousestate.Y)));
-                            money -= food_price;
-                        }
-                    }
-                }
-                else if (type_click == "buybird" & money >= bird_price)
-                {
-                    bird.Add(new Pigeon(pigeon_texture, pigeon_fly, new Vector2(rnd.Next(10, bound_X), rnd.Next(310, bound_Y))));
-                    money -= bird_price;
-                }
-                else if (type_click == "sign" & c_sign == 0 & money >= price_sign)
-                {
-                    type_click = "sign_select";
-                    holding_text = "Choose the area";
-                    holding_price = " ";
-                    money -= price_sign;
-                }
-                else if (type_click == "sign_select")
-                {
-                    if (!none_area.Contains(_mousestate.X, _mousestate.Y) & !none_area2.Contains(_mousestate.X, _mousestate.Y) )
-                    {
-                        if (_mousestate.X < _graphics.GraphicsDevice.Viewport.Width & _mousestate.Y < _graphics.GraphicsDevice.Viewport.Height & _mousestate.X > 0 & _mousestate.Y > 0)
-                        {
-                            c_sign = cooldown_sign;
-                            type_click = "food";
-                            _sign.Add(new Sign(sign_texture, new Vector2(_mousestate.X - (sign_texture.Width / 2), _mousestate.Y - (sign_texture.Height / 2)), time_sign, area_sign));
-                        }
-                    }
-                }
-                else if (type_click == "police" & c_police == 0 & money >= price_police)
-                {
-                    _police.Add(new Police(police_texture, time_police));
-                    c_police = cooldown_police;
-                    money -= price_police;
-                }
-                else if (type_click == "car" & c_car == 0 & money >= price_car)
-                {
-                    _car.Add(new Car(car_texture, time_car));
-                    c_car = cooldown_car;
-                    money -= price_car;
-                }
-
-            }
-
-            //update car
-            foreach (Car mini_car in _car)
-            {
-                mini_car.update(elapsed);
-                if (mini_car.pos.X < -250)
-                {
-                    _car.Remove(mini_car);
-                    break;
-                }
-                foreach (kid mini_dek in dek)
-                {
-                    if (mini_dek.health <= mini_dek.max_health / 2 & mini_dek.hitbox.Intersects(mini_car.hitbox))
-                    {
-                        dek.Remove(mini_dek);
+                        hit.Remove(mini_effect);
                         break;
                     }
                 }
-            }
-            //update police
 
-            foreach (Police mini_police in _police)
-            {
-                mini_police.selecttarget(dek, elapsed);
-                mini_police.update();
-                if (mini_police.time_out)
+                //update score
+                time_score += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (bird.Count > bird_a)
                 {
-                    if (mini_police.pos.X >= _graphics.GraphicsDevice.Viewport.Width)
-                    {
-                        _police.Remove(mini_police);
-                        break;
-                    }
+                    bird_a = bird.Count;
+                }
+                if (money > money_a)
+                {
+                    money_a = money;
                 }
             }
-
-            //update sign
-            foreach (Sign mini_sign in _sign)
+            else if(pause & button_pause.Contains(_mousestate.X,_mousestate.Y) & _mousestate.LeftButton == ButtonState.Pressed & oldms.LeftButton == ButtonState.Released)
             {
-                if (mini_sign.time_out(elapsed))
-                {
-                    _sign.Remove(mini_sign);
-                    break;
-                }
+                pause = false;
             }
-
-            //Control worth coin
-            if(bird.Count > 0 && bird.Count <= 5)
-            {
-                Coin.worth = 5;
-            }
-            else if(bird.Count > 5 && bird.Count <= 10)
-            {
-                Coin.worth = 4;
-            }
-            else if (bird.Count > 10 && bird.Count <= 15)
-            {
-                Coin.worth = 3;
-            }
-            else if (bird.Count > 15 && bird.Count <= 20)
-            {
-                Coin.worth = 2;
-            }
-            else if (bird.Count > 20)
-            {
-                Coin.worth = 1;
-            }
-
-
-            //destroy food
-            foreach (food mini_food in bfood)
-            {
-                if (mini_food.selfdestroy(elapsed))
-                {
-                    bfood.Remove(mini_food);
-                    break;
-                }
-            }
-
-            //update effect
-            foreach(Ceffect mini_effect in hit)
-            {
-                if(mini_effect.update(elapsed))
-                {
-                    hit.Remove(mini_effect);
-                    break;
-                }
-            }
-
-
             //old item
             oldms = _mousestate;
             oldstate = _keyboardState;
@@ -567,6 +686,16 @@ namespace pigeonthapae
             }
             _spriteBatch.DrawString(uid_font, Convert.ToString(money), new Vector2(77, 746), Color.Black);
             _spriteBatch.DrawString(uid_font, Convert.ToString(bird.Count), new Vector2(77, 710), Color.Black);
+
+            if (!pause)
+            {
+                _spriteBatch.Draw(pause_1, button_pause, Color.White);
+            }
+            else
+            {
+                _spriteBatch.Draw(pause_dark, Vector2.Zero, Color.White);
+                _spriteBatch.Draw(pause_2, button_pause, Color.White);
+            }
             _spriteBatch.End();
 
             base.Draw(gameTime);
