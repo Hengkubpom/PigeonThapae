@@ -140,6 +140,30 @@
 /processorParam:TextureFormat=Color
 /build:sign.png
 
+#begin Sound/OnEnd.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Sound/OnEnd.mp3
+
+#begin Sound/Onfight.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Sound/Onfight.mp3
+
+#begin Sound/Onlobby.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Sound/Onlobby.mp3
+
+#begin Sound/Onplay.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Sound/Onplay.mp3
+
 #begin textfont_uid.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
