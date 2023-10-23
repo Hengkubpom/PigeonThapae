@@ -1,5 +1,6 @@
 ﻿using _321_Lab05_3;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -31,6 +32,8 @@ namespace pigeonthapae
         public bool go_out = false;
         public List<Coin> coins = new List<Coin>();
         private int hungry = 5;
+        private bool allow_effectfly = true;
+        
 
 
 
@@ -121,6 +124,13 @@ namespace pigeonthapae
                 go_out = true;
                 fly = true;
                 allow_hitbox = false;
+                if (allow_effectfly)
+                {
+                    var instance = Game1.sEffect[3].CreateInstance();
+                    instance.Volume = 1;
+                    instance.Play();
+                    allow_effectfly = false;
+                }
                 anim.changeall(flytexture, 9, 1, 10, 1);
                 if (pos.X < 500)
                 {

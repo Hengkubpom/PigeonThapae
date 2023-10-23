@@ -19,10 +19,12 @@ namespace pigeonthapae
         private AnimatedTexture anim = new AnimatedTexture(Vector2.Zero, 0, 1, 0);
         private float time_out;
         public Rectangle hitbox;
+        private bool allow_eout = true;
         public Car(Texture2D asset, float time_out)
         {
             anim.Load(asset,7,2,10,1);
             this.time_out = time_out;
+            Game1.sEffect[6].CreateInstance().Play();
         }
         public void Draw(SpriteBatch _batch)
         {
@@ -50,7 +52,18 @@ namespace pigeonthapae
             if (time_out <= 0)
             {
                 target = new Vector2(-300, 610);
+                if (allow_eout)
+                {
+                    Game1.sEffect[7].CreateInstance().Play();
+                    allow_eout = false;
+                }
             }
+
+            //if(pos.X < 1200 & allow_ein)
+            //{
+            //    Game1.sEffect[6].CreateInstance().Play();
+            //    allow_ein = false;
+            //}
         }
     }
 }

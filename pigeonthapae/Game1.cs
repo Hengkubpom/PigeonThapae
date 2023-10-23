@@ -1,5 +1,6 @@
 ﻿using _321_Lab05_3;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
@@ -37,6 +38,7 @@ namespace pigeonthapae
         private float cooldown_car = 40;
         private Vector2 area_sign = new Vector2(100, 100);
         private float main_volume = 0.3f;
+        private float main_volume_effect = 0.6f;
 
         //system
         private GraphicsDeviceManager _graphics;
@@ -68,6 +70,7 @@ namespace pigeonthapae
         private BinaryReader reader;
         private BinaryWriter writer;
         private Song onFight, onEnd, onLobby, onPlay;
+        static public List<SoundEffect> sEffect = new List<SoundEffect>();
         ScreenState screen;
         enum ScreenState
         {
@@ -169,6 +172,16 @@ namespace pigeonthapae
             onFight = Content.Load<Song>("Sound/Onfight");
             onLobby = Content.Load<Song>("Sound/Onlobby");
             onPlay = Content.Load<Song>("Sound/Onplay");
+            sEffect.Add(Content.Load<SoundEffect>("Sound/attacked"));     //0
+            sEffect.Add(Content.Load<SoundEffect>("Sound/feed"));     //1
+            sEffect.Add(Content.Load<SoundEffect>("Sound/money_down"));     //2
+            sEffect.Add(Content.Load<SoundEffect>("Sound/onFly"));     //3
+            sEffect.Add(Content.Load<SoundEffect>("Sound/onHit"));     //4
+            sEffect.Add(Content.Load<SoundEffect>("Sound/Police"));     //5
+            sEffect.Add(Content.Load<SoundEffect>("Sound/Redcar"));     //6
+            sEffect.Add(Content.Load<SoundEffect>("Sound/Redcar2"));     //7
+            sEffect.Add(Content.Load<SoundEffect>("Sound/Sign"));     //8
+            SoundEffect.MasterVolume = main_volume_effect;
             MediaPlayer.Play(onLobby);
             MediaPlayer.Volume = main_volume;
             MediaPlayer.IsRepeating = true;
@@ -319,6 +332,8 @@ namespace pigeonthapae
                             if (time_pick >= Time_spawn_dek || _keyboardState.IsKeyDown(Keys.H) & oldstate.IsKeyUp(Keys.H))
                             {
                                 dek.Add(new kid(kid_texure, where_dekspawn, boss_health, barcolor));
+                                sEffect[0].CreateInstance().Play();
+                                main_volume = 0.3f;
                                 MediaPlayer.Volume = 0;
                                 MediaPlayer.Play(onFight);
                                 attacked = true;
@@ -368,6 +383,7 @@ namespace pigeonthapae
                                     deks.selectbird(bird, elapsed, _car, _sign, none_area);
                                     if (deks.pos.X < -100 && deks.death)
                                     {
+                                        main_volume = 0.2f;
                                         MediaPlayer.Volume = 0;
                                         MediaPlayer.Play(onPlay);
                                         dek.Remove(deks);
@@ -459,12 +475,16 @@ namespace pigeonthapae
                                         {
                                             if (!mini_dek.damaged(_mousestate, oldms) & money >= food_price)
                                             {
+                                                var instance = sEffect[1].CreateInstance();
+                                                instance.Volume = 0.2f;
+                                                instance.Play();
                                                 bfood.Add(new food(food_texture, 1, 1, 1, new Vector2(_mousestate.X, _mousestate.Y)));
 
                                                 money -= food_price;
                                             }
                                             else //feedback
                                             {
+                                                sEffect[4].CreateInstance().Play();
                                                 hit.Add(new Ceffect(hit_effect, new Vector2(_mousestate.X, _mousestate.Y)));
                                             }
                                         }
@@ -473,6 +493,9 @@ namespace pigeonthapae
                                     {
                                         if (money >= food_price)
                                         {
+                                            var instance = sEffect[1].CreateInstance();
+                                            instance.Volume = 0.2f;
+                                            instance.Play();
                                             bfood.Add(new food(food_texture, 1, 1, 1, new Vector2(_mousestate.X, _mousestate.Y)));
                                             money -= food_price;
                                         }
@@ -480,11 +503,13 @@ namespace pigeonthapae
                                 }
                                 else if (type_click == "buybird" & money >= bird_price)
                                 {
+                                    sEffect[2].CreateInstance().Play();
                                     bird.Add(new Pigeon(pigeon_texture, pigeon_fly, new Vector2(rnd.Next(10, bound_X), rnd.Next(310, bound_Y))));
                                     money -= bird_price;
                                 }
                                 else if (type_click == "sign" & c_sign == 0 & money >= price_sign)
                                 {
+                                    sEffect[2].CreateInstance().Play();
                                     type_click = "sign_select";
                                     holding_text = "Choose the area";
                                     holding_price = " ";
@@ -498,18 +523,21 @@ namespace pigeonthapae
                                         {
                                             c_sign = cooldown_sign;
                                             type_click = "food";
+                                            sEffect[8].CreateInstance().Play();
                                             _sign.Add(new Sign(sign_texture, new Vector2(_mousestate.X - (sign_texture.Width / 2), _mousestate.Y - (sign_texture.Height / 2)), time_sign, area_sign));
                                         }
                                     }
                                 }
                                 else if (type_click == "police" & c_police == 0 & money >= price_police)
                                 {
+                                    sEffect[2].CreateInstance().Play();
                                     _police.Add(new Police(police_texture, time_police));
                                     c_police = cooldown_police;
                                     money -= price_police;
                                 }
                                 else if (type_click == "car" & c_car == 0 & money >= price_car)
                                 {
+                                    sEffect[2].CreateInstance().Play();
                                     _car.Add(new Car(car_texture, time_car));
                                     c_car = cooldown_car;
                                     money -= price_car;
@@ -643,6 +671,7 @@ namespace pigeonthapae
                             }
                             if (_keyboardState.IsKeyDown(Keys.Enter) & oldstate.IsKeyUp(Keys.Enter))  //Exit
                             {
+                                main_volume = 0.3f;
                                 MediaPlayer.Volume = 0;
                                 MediaPlayer.Play(onLobby);
                                 MediaPlayer.IsRepeating = true;
@@ -821,6 +850,7 @@ namespace pigeonthapae
             }
             if (_keyboardState.IsKeyDown(Keys.Enter) & oldstate.IsKeyUp(Keys.Enter))
             {
+                main_volume = 0.2f;
                 MediaPlayer.Volume = 0;
                 MediaPlayer.Play(onPlay);
                 screen = ScreenState.Gameplay;

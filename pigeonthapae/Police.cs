@@ -25,6 +25,7 @@ namespace pigeonthapae
         private float time_police;
         public bool time_out = false;
         private int walk = 0;
+        private bool allow_effect = true;
         public Police(Texture2D asset, float time_police)
         {
             pos = new Vector2(1200, 350);
@@ -91,6 +92,13 @@ namespace pigeonthapae
             {
                 anim.startrow = 1;
                 anim.TimePerFrame = (float)1 / 5;
+            }
+            if(pos.X < 1000 & allow_effect)
+            {
+                var instance = Game1.sEffect[5].CreateInstance();
+                instance.Volume = 0.2f;
+                instance.Play();
+                allow_effect = false;
             }
         }
 
