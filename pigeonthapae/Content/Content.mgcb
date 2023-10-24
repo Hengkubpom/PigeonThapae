@@ -158,6 +158,12 @@
 /processorParam:Quality=Best
 /build:Sound/money_down.wav
 
+#begin Sound/onCooldown.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sound/onCooldown.wav
+
 #begin Sound/OnEnd.mp3
 /importer:Mp3Importer
 /processor:SongProcessor
